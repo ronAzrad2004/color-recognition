@@ -150,60 +150,93 @@ public class Project_code {
         colorList.add(new ColorName("YellowGreen", 0x9A, 0xCD, 0x32));
         return colorList;
     }
-    public static String starts(String path) {
-        String res="";
-        File input_image=null;
-        path=path.replaceAll("\\\\","/");
-        input_image=new File(path);
+    /**
+     * This method finds the closest color name from an image file.
+     * It calculates the average RGB value of the entire image and finds the closest color match.
+     *
+     * @param path The file path of the image.
+     * @return The name of the closest matching color.
+     */
+    public static String findColName(String path) {
+        String res = "";
+        File input_image = null;
+
+        // Replace backslashes with forward slashes to standardize the file path format
+        path = path.replaceAll("\\\\", "/");
+        input_image = new File(path);
+
         BufferedImage image_data;
-        program:
-        {
+
+        // Labeled block for handling exceptions
+        program: {
             try {
+                // Read the image from the provided file path
                 image_data = ImageIO.read(input_image);
             } catch (Exception exp) {
+                // Print the error message if image loading fails
                 System.out.println(exp);
                 break program;
             }
-            int average_red=0,average_blue=0,average_green=0;
-            for(int i=0,i1=0;i<image_data.getHeight();i++,i1++){
-                int red=0,blue=0,green=0;
-                for(int j=0;j<image_data.getWidth();j++){
-                        Color color = new Color(image_data.getRGB(j, i));
-                        red += color.getRed();
-                        blue += color.getBlue();
-                        green += color.getGreen();
+
+            // Variables to store the total RGB values
+            int average_red = 0, average_blue = 0, average_green = 0;
+
+            // Iterate over each pixel row in the image
+            for (int i = 0, i1 = 0; i < image_data.getHeight(); i++, i1++) {
+                int red = 0, blue = 0, green = 0;
+
+                // Iterate over each pixel column in the image
+                for (int j = 0; j < image_data.getWidth(); j++) {
+                    // Extract color information from the pixel
+                    Color color = new Color(image_data.getRGB(j, i));
+                    red += color.getRed();
+                    blue += color.getBlue();
+                    green += color.getGreen();
                 }
 
-
-                average_red+=(int)(red/image_data.getWidth());
-                average_blue+=(int)(blue/image_data.getWidth());
-                average_green+=(int)(green/image_data.getWidth());
-
+                // Compute the average RGB values for the current row
+                average_red += (int) (red / image_data.getWidth());
+                average_blue += (int) (blue / image_data.getWidth());
+                average_green += (int) (green / image_data.getWidth());
             }
-            average_red=average_red/image_data.getHeight();
-            average_green=average_green/image_data.getHeight();
-            average_blue=average_blue/image_data.getHeight();
-            res=getColorNameFromRgb(average_red,average_green,average_blue);
+
+            // Compute the overall average RGB values for the entire image
+            average_red = average_red / image_data.getHeight();
+            average_green = average_green / image_data.getHeight();
+            average_blue = average_blue / image_data.getHeight();
+
+            // Get the closest color name based on the computed average RGB values
+            res = getColorNameFromRgb(average_red, average_green, average_blue);
         }
         return res;
     }
+
+    /**
+     * This method finds the closest matching color name based on RGB values.
+     *
+     * @param r The red component (0-255).
+     * @param g The green component (0-255).
+     * @param b The blue component (0-255).
+     * @return The name of the closest matching color.
+     */
     public static String getColorNameFromRgb(int r, int g, int b) {
-        ArrayList<ColorName> colorList = initColorList();//color list with a data base of 142 colors
+        // Initialize the color list with predefined colors
+        ArrayList<ColorName> colorList = initColorList(); // Color list with a database of 142 colors
+
         ColorName closestMatch = null;
         int minMSE = Integer.MAX_VALUE;
         int mse;
+
+        // Iterate through all known colors to find the closest match
         for (ColorName c : colorList) {
-            mse = c.computeMSE(r, g, b);
+            mse = c.computeMSE(r, g, b); // Compute Mean Squared Error (MSE) for color similarity
             if (mse < minMSE) {
                 minMSE = mse;
                 closestMatch = c;
             }
         }
 
-        if (closestMatch != null) {
-            return closestMatch.getName();
-        } else {
-            return "No matched color name.";
-        }
+        // Return the closest matching color name, or a default message if no match is found
+        return (closestMatch != null) ? closestMatch.getName() : "No matched color name.";
     }
 }
